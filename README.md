@@ -7,7 +7,7 @@ AI-powered DSA interview coach for coding interview preparation.
 ### Prerequisites
 - Python 3.10+
 - Node.js 16+
-- Azure OpenAI API key and endpoint
+- GitHub personal access token (for GitHub Models API)
 
 ### Backend Setup
 
@@ -18,8 +18,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Set environment variables
-export AZURE_OPENAI_KEY="your-key"
-export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+export GITHUB_TOKEN="your-github-token"  # Get from https://github.com/settings/tokens
 
 # Start server (port 8000)
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
@@ -159,10 +158,40 @@ curl -X POST http://localhost:8000/analyze \
 
 ## 📚 Documentation
 
-- [MVP Scope](docs/mvp-scope.md) - Feature requirements
-- [Tech Stack](docs/tech-stack.md) - Technology details
-- [Copilot Instructions](.github/copilot-instructions.md) - AI agent guide
-- [Frontend README](frontend/README.md) - React app details
+### Submission Materials
+- **[READY_TO_SUBMIT.md](READY_TO_SUBMIT.md)** ⭐ START HERE - Final submission checklist & status
+- **[PITCH_DECK.md](PITCH_DECK.md)** - 15 slides + speaking notes (1/3/5-min variants)
+- **[DEMO_VIDEOS.md](DEMO_VIDEOS.md)** - Complete video scripts + production guide
+- **[RECORD_TODAY.md](RECORD_TODAY.md)** - Quick reference for recording videos
+- **[SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md)** - Step-by-step form completion guide
+
+### Technical Documentation
+- **[Copilot Instructions](.github/copilot-instructions.md)** - AI agent development guide
+- **[Frontend README](frontend/README.md)** - React app architecture
+- **[Backend README](backend/README.md)** - FastAPI setup (if exists)
+- **[MVP Scope](docs/mvp-scope.md)** - Feature requirements
+
+## 🚀 Imagine Cup 2026 Submission
+
+### Status
+- ✅ MVP Complete (Frontend + Backend + AI Integration)
+- ✅ Both services running (http://localhost:3000 and 8000)
+- ✅ GitHub Models API integrated (gpt-4o)
+- ⏳ Videos pending (record today)
+- ⏳ Form submission (tomorrow at 1:00 PM IST)
+
+### Deadline
+**January 10, 2026, 1:29 PM IST** (~17 hours remaining)
+
+### Next Steps
+1. **Today:** Record demo + pitch videos (use [RECORD_TODAY.md](RECORD_TODAY.md))
+2. **Tomorrow AM:** Fill Imagine Cup form (use [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md))
+3. **Tomorrow 1:00 PM:** Submit before deadline
+
+### Quick Links
+- **GitHub Repository**: https://github.com/anubhavaanand/interview-flow-AI2026
+- **Demo**: Run `./start.sh` to test locally
+- **Pitch**: See [PITCH_DECK.md](PITCH_DECK.md) for 3-minute variant
 
 ## 🤝 Contributing
 
@@ -174,5 +203,6 @@ This project is part of the Imagine Cup 2026 submission.
 
 ---
 
-**Deadline**: 10 Jan 2026, 1:29 PM IST  
-**Status**: Phase 3 Complete (Frontend MVP Running)
+**Status**: 🟢 READY FOR SUBMISSION  
+**Last Updated**: January 9, 2026  
+**Deadline**: January 10, 2026, 1:29 PM IST
