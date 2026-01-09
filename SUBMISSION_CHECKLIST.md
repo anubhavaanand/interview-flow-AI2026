@@ -1,8 +1,9 @@
 # IMAGINE CUP 2026 - SUBMISSION CHECKLIST
 
-**Deadline:** January 10, 2026 @ 1:29 PM IST
-**Status:** 🟢 On Track
-**Time Remaining:** ~17 hours
+**Deadline:** January 10, 2026 @ 1:29 PM IST  
+**Status:** 🟡 IN PROGRESS  
+**Time Remaining:** ~17 hours  
+**Last Updated:** Jan 9, 4:15 PM IST
 
 ---
 
