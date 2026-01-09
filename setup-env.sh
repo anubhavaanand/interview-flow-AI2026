@@ -1,6 +1,6 @@
-------#!/bin/bash
-# Setup environment variables for Azure OpenAI integration
-# Run this once to configure your credentials
+#!/bin/home/anubhavanand/Desktop/interview-flow-AI2026/backend/.env/bash
+# Setup environment variables for GitHub Models
+# Run this once to configure your GitHub token
 
 set -e
 
@@ -9,7 +9,7 @@ ENV_FILE="$PROJECT_ROOT/backend/.env"
 ENV_EXAMPLE="$PROJECT_ROOT/backend/.env.example"
 
 echo "════════════════════════════════════════════════════════════"
-echo "  Azure OpenAI Environment Setup"
+echo "  GitHub Models Environment Setup"
 echo "════════════════════════════════════════════════════════════"
 
 # Check if .env already exists
