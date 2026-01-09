@@ -1,4 +1,4 @@
-#!/bin/bash
+------#!/bin/bash
 # Setup environment variables for Azure OpenAI integration
 # Run this once to configure your credentials
 
@@ -28,38 +28,31 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 echo ""
-echo "📝 Please provide your Azure OpenAI credentials:"
+echo "📝 Please provide your GitHub Models token:"
+echo ""
+echo "💡 To get a token:"
+echo "   1. Go to: https://github.com/settings/tokens"
+echo "   2. Click 'Generate new token' → 'Fine-grained personal access token'"
+echo "   3. Give it a name and select 'ai_model' permission"
+echo "   4. Copy the token and paste it below"
 echo ""
 
-read -p "Azure OpenAI API Key (AZURE_OPENAI_KEY): " API_KEY
-if [ -z "$API_KEY" ]; then
-    echo "❌ API Key is required!"
+read -sp "GitHub Token (GITHUB_TOKEN): " GITHUB_TOKEN
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo ""
+    echo "❌ GitHub Token is required!"
     exit 1
 fi
 
-read -p "Azure OpenAI Endpoint (AZURE_OPENAI_ENDPOINT): " ENDPOINT
-if [ -z "$ENDPOINT" ]; then
-    echo "❌ Endpoint is required!"
-    exit 1
-fi
-
-# Validate endpoint format
-if [[ ! $ENDPOINT =~ https:// ]]; then
-    echo "❌ Endpoint should start with https://"
-    exit 1
-fi
-
-read -p "Azure OpenAI Deployment Name [gpt-4] (optional): " DEPLOYMENT
-DEPLOYMENT=${DEPLOYMENT:-gpt-4}
+echo ""
+echo ""
 
 # Create .env file
 cat > "$ENV_FILE" << EOF
-# Azure OpenAI Configuration
+# GitHub Models Configuration
 # Generated: $(date)
 
-AZURE_OPENAI_KEY=$API_KEY
-AZURE_OPENAI_ENDPOINT=$ENDPOINT
-AZURE_OPENAI_DEPLOYMENT=$DEPLOYMENT
+GITHUB_TOKEN=$GITHUB_TOKEN
 
 # Backend Configuration
 BACKEND_HOST=0.0.0.0

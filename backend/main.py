@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from openai import AzureOpenAI
+from openai import OpenAI
 from prompts import DSA_FEEDBACK_PROMPT
 
 # Load environment variables
@@ -31,23 +31,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Azure OpenAI client (lazy initialization)
-AZURE_OPENAI_KEY = os.getenv("AZURE_OPENAI_KEY")
-AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+# Initialize GitHub Models client
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 client = None
 
-if not AZURE_OPENAI_KEY or not AZURE_OPENAI_ENDPOINT:
-    print("⚠️  Warning: Azure OpenAI credentials not set. Set AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT environment variables.")
+if not GITHUB_TOKEN:
+    print("⚠️  Warning: GitHub token not set. Set GITHUB_TOKEN environment variable.")
+    print("   Run: ./setup-env.sh")
 else:
     try:
-        client = AzureOpenAI(
-            api_key=AZURE_OPENAI_KEY,
-            api_version="2024-02-15-preview",
-            azure_endpoint=AZURE_OPENAI_ENDPOINT
+        client = OpenAI(
+            api_key=GITHUB_TOKEN,
+            base_url="https://models.inference.ai.azure.com"
         )
+        print("✅ GitHub Models client initialized successfully")
     except Exception as e:
-        print(f"⚠️  Warning: Failed to initialize Azure OpenAI client: {e}")
+        print(f"⚠️  Warning: Failed to initialize GitHub Models client: {e}")
 
 # ============================================================================
 # DATA MODELS
@@ -140,7 +140,7 @@ async def analyze_code(request: AnalysisRequest):
     if not client:
         raise HTTPException(
             status_code=503,
-            detail="Azure OpenAI is not configured. Set AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT."
+            detail="GitHub token is not configured. Run: ./setup-env.sh"
         )
     
     try:
@@ -150,9 +150,9 @@ async def analyze_code(request: AnalysisRequest):
             code=request.code
         )
         
-        # Call Azure OpenAI
+        # Call GitHub Models API
         response = client.chat.completions.create(
-            model="gpt-4-turbo",  # Adjust if using different model name
+            model="gpt-4o",  # GitHub Models provides GPT-4o
             messages=[
                 {
                     "role": "system",
@@ -179,7 +179,7 @@ async def analyze_code(request: AnalysisRequest):
     
     except Exception as e:
         # Log error and return response
-        print(f"Error calling Azure OpenAI: {str(e)}")
+        print(f"Error calling GitHub Models: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error analyzing code: {str(e)}"
