@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function Feedback() {
-  const navigate = useNavigate();
   const [feedbackData, setFeedbackData] = useState(null);
   const [loading, setLoading] = useState(true);
 

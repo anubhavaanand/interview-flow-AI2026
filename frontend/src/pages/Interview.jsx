@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchProblem, analyzCode } from '../api';
+import { fetchProblem, analyzeCode } from '../api';
 
 function Interview() {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ function Interview() {
     setError(null);
 
     try {
-      const result = await analyzCode(code, problem.topic);
+      const result = await analyzeCode(code, problem.topic);
 
       if (result.success) {
         // Store feedback in session storage for the Feedback page
