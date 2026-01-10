@@ -23,7 +23,7 @@ export const fetchProblem = async () => {
 /**
  * Submit code for analysis
  */
-export const analyzCode = async (code, topic) => {
+export const analyzeCode = async (code, topic) => {
   try {
     const response = await fetch(`${API_BASE_URL}/analyze`, {
       method: 'POST',
