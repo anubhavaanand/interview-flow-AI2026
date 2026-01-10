@@ -216,23 +216,36 @@ def parse_feedback(feedback_text: str) -> Feedback:
 def extract_section(text: str, section_name: str) -> str:
     """Extract a section from feedback text."""
     import re
-    pattern = rf"(?:^|\n)\*?\*?{section_name}(?:\*?\*?:|\*\*).*?(?=\n\d|\n\*|$)"
+    # Match the section header and capture everything after it until the next section or end
+    # Look for next bold section header or numbered list item
+    pattern = rf"\*?\*?{section_name}\*?\*?:\s*(.*?)(?=\n+\*\*|\n+\d+\.|\Z)"
     match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
     if match:
-        return match.group(0).replace(f"**{section_name}:**", "").replace(f"{section_name}:", "").strip()
+        result = match.group(1).strip()
+        return result
     return f"No {section_name} analysis provided."
 
 def extract_improvement_plan(text: str) -> list[str]:
     """Extract improvement plan steps from feedback text."""
     import re
-    plan_section = re.search(r"(?:3\.\s*)?(?:3-Step\s+)?Improvement Plan:?(.*?)(?=\n\n|\Z)", text, re.IGNORECASE | re.DOTALL)
+    plan_section = re.search(r"(?:3\.\s*)?(?:3-Step\s+)?Improvement Plan:?\s*(.*?)(?=\n\n|\Z)", text, re.IGNORECASE | re.DOTALL)
     
     if plan_section:
         plan_text = plan_section.group(1)
         # Extract lines that look like steps
-        steps = re.findall(r"(?:Step\s+\d+:|[-•])\s*(.+?)(?=\n(?:Step|[-•]|$))", plan_text, re.IGNORECASE)
+        steps = []
+        
+        # Try to find numbered steps first (Step 1:, Step 2:, etc.)
+        numbered_steps = re.findall(r"(?:Step\s+\d+:|[-•]\s*Step\s+\d+:)\s*(.+?)(?=\n\s*(?:Step\s+\d+:|[-•])|$)", plan_text, re.IGNORECASE | re.DOTALL)
+        if numbered_steps:
+            steps = [step.strip() for step in numbered_steps if step.strip()]
+        else:
+            # Fall back to bullet points
+            bullet_steps = re.findall(r"[-•]\s*(.+?)(?=\n\s*[-•]|\n\n|$)", plan_text, re.DOTALL)
+            steps = [step.strip() for step in bullet_steps if step.strip()]
+        
         if steps:
-            return [step.strip() for step in steps if step.strip()]
+            return steps
     
     return [
         "Review the code for any inefficiencies",
