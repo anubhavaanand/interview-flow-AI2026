@@ -6,8 +6,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import Home from '../pages/Home';
-import Dashboard from '../pages/Dashboard';
+import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 
 // Helper to render components with router
 const renderWithRouter = (component) => {

@@ -180,7 +180,7 @@ npm run build
 ### Frontend
 - **Lazy Loading**: Pages load on-demand, reducing initial bundle size by ~30-40%
 - **React.memo()**: Prevents unnecessary re-renders of components
-- **Code Debouncing**: Optimizes textarea performance during typing
+- **Debounce Hook**: Custom useDebounce hook available for future optimization features
 - **Skeleton Screens**: Better perceived performance with loading placeholders
 
 ### Backend

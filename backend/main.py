@@ -93,6 +93,17 @@ else:
     logger.warning("⚠️  Warning: GitHub token not set. Set GITHUB_TOKEN environment variable.")
 
 # ============================================================================
+# CONSTANTS
+# ============================================================================
+
+# Allowed DSA topics for validation
+ALLOWED_TOPICS = [
+    'sliding_window', 'two_pointers', 'dynamic_programming',
+    'array', 'string', 'tree', 'graph', 'hash_table',
+    'stack', 'queue', 'linked_list', 'other'
+]
+
+# ============================================================================
 # DATA MODELS WITH VALIDATORS
 # ============================================================================
 
@@ -138,9 +149,7 @@ class AnalysisRequest(BaseModel):
         v = v.strip().lower()
         
         # Validate against allowed topics
-        allowed_topics = ['sliding_window', 'two_pointers', 'dynamic_programming', 
-                         'array', 'string', 'tree', 'graph', 'other']
-        if v not in allowed_topics:
+        if v not in ALLOWED_TOPICS:
             logger.warning(f"Topic '{v}' not in standard list, allowing anyway")
         
         return v

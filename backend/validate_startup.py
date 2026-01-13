@@ -67,7 +67,7 @@ def check_dependencies():
         'fastapi',
         'uvicorn',
         'openai',
-        'dotenv',
+        'python-dotenv',
         'pydantic',
         'slowapi',
     ]
@@ -75,12 +75,7 @@ def check_dependencies():
     missing = []
     
     for package in required_packages:
-        # Handle package name differences
-        import_name = package
-        if package == 'dotenv':
-            import_name = 'dotenv'
-        
-        spec = importlib.util.find_spec(import_name)
+        spec = importlib.util.find_spec(package)
         if spec is None:
             missing.append(f"❌ {package}")
         else:

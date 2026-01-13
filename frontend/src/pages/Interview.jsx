@@ -1,7 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchProblem, analyzeCode } from '../api';
-import { useDebounce } from '../hooks/useDebounce';
 
 // Memoized components to prevent unnecessary re-renders
 const ProblemDisplay = memo(({ problem }) => (
@@ -56,9 +55,6 @@ function Interview() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Debounce code changes to reduce performance impact
-  const debouncedCode = useDebounce(code, 500);
 
   // Load problem on mount
   useEffect(() => {
