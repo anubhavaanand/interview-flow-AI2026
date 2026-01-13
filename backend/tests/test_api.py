@@ -91,13 +91,14 @@ class TestAnalyzeEndpoint:
         assert response.status_code in [200, 503]
         
         data = response.json()
-        assert "success" in data
         
         if response.status_code == 200:
+            assert "success" in data
             assert data["success"] is True
             assert "feedback" in data
         else:
-            assert data["detail"]  # Error message
+            # When AI is not configured, we expect a detail field with error message
+            assert "detail" in data  # Error message
 
 
 class TestValidation:

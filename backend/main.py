@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, field_validator, Field
 from dotenv import load_dotenv
 from openai import OpenAI
 from prompts import DSA_FEEDBACK_PROMPT
@@ -111,7 +111,8 @@ class AnalysisRequest(BaseModel):
     code: str = Field(..., min_length=1, max_length=10000)
     topic: str = Field(..., min_length=1, max_length=100)
     
-    @validator('code')
+    @field_validator('code')
+    @classmethod
     def validate_code(cls, v):
         """Validate and sanitize code input."""
         if not v or not v.strip():
@@ -126,7 +127,8 @@ class AnalysisRequest(BaseModel):
         
         return v
     
-    @validator('topic')
+    @field_validator('topic')
+    @classmethod
     def validate_topic(cls, v):
         """Validate topic input."""
         if not v or not v.strip():
@@ -216,20 +218,20 @@ async def get_problem(request: Request):
 
 @app.post("/analyze", response_model=AnalysisResponse, tags=["analysis"])
 @limiter.limit("10/minute")  # Rate limit: 10 analysis requests per minute
-async def analyze_code(request: AnalysisRequest, req: Request):
+async def analyze_code(data: AnalysisRequest, request: Request):
     """
     Analyze user's code and provide AI-generated feedback.
     
     Args:
-        request: AnalysisRequest with validated code and topic
-        req: FastAPI Request object for logging
+        data: AnalysisRequest with validated code and topic
+        request: FastAPI Request object for logging
     
     Returns:
         AnalysisResponse with feedback from GitHub Models API
     """
-    client_ip = req.client.host if req.client else "unknown"
+    client_ip = request.client.host if request.client else "unknown"
     logger.info(f"POST /analyze - Code analysis requested from {client_ip}")
-    logger.info(f"Topic: {request.topic}, Code length: {len(request.code)} chars")
+    logger.info(f"Topic: {data.topic}, Code length: {len(data.code)} chars")
     
     # Check if GitHub Models is configured
     if not client:
@@ -242,8 +244,8 @@ async def analyze_code(request: AnalysisRequest, req: Request):
     try:
         # Build prompt
         prompt = DSA_FEEDBACK_PROMPT.format(
-            topic=request.topic,
-            code=request.code
+            topic=data.topic,
+            code=data.code
         )
         
         logger.info("Calling GitHub Models API for code analysis")
