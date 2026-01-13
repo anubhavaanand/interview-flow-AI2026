@@ -1,5 +1,27 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+// Memoized feature list component
+const FeatureList = memo(() => (
+  <div style={{ marginBottom: '30px' }}>
+    <h3 style={{ marginBottom: '15px' }}>What You'll Get:</h3>
+    <ul style={{ listStyle: 'none', textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
+      {[
+        'Real DSA Problems (Similar to interviews)',
+        'AI-Powered Code Review & Feedback',
+        'Complexity Analysis (Time & Space)',
+        '3-Step Improvement Plan'
+      ].map((feature, idx) => (
+        <li key={idx} style={{ marginBottom: '10px', paddingLeft: '30px', position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 0, color: '#007bff', fontWeight: 'bold' }}>✓</span>
+          {feature}
+        </li>
+      ))}
+    </ul>
+  </div>
+));
+
+FeatureList.displayName = 'FeatureList';
 
 function Home() {
   const navigate = useNavigate();
@@ -24,25 +46,7 @@ function Home() {
         </p>
 
         <div style={{ marginBottom: '30px' }}>
-          <h3 style={{ marginBottom: '15px' }}>What You'll Get:</h3>
-          <ul style={{ listStyle: 'none', textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
-            <li style={{ marginBottom: '10px', paddingLeft: '30px', position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 0, color: '#007bff', fontWeight: 'bold' }}>✓</span>
-              Real DSA Problems (Similar to interviews)
-            </li>
-            <li style={{ marginBottom: '10px', paddingLeft: '30px', position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 0, color: '#007bff', fontWeight: 'bold' }}>✓</span>
-              AI-Powered Code Review & Feedback
-            </li>
-            <li style={{ marginBottom: '10px', paddingLeft: '30px', position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 0, color: '#007bff', fontWeight: 'bold' }}>✓</span>
-              Complexity Analysis (Time & Space)
-            </li>
-            <li style={{ marginBottom: '10px', paddingLeft: '30px', position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 0, color: '#007bff', fontWeight: 'bold' }}>✓</span>
-              3-Step Improvement Plan
-            </li>
-          </ul>
+          <FeatureList />
         </div>
 
         <button className="button" onClick={handleStart} style={{ padding: '12px 30px', fontSize: '18px' }}>
