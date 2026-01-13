@@ -1,6 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchProblem, analyzeCode } from '../api';
+
+// Memoized components to prevent unnecessary re-renders
+const ProblemDisplay = memo(({ problem }) => (
+  <>
+    <div className="feedback-section">
+      <h3>Problem Description</h3>
+      <p>{problem.description}</p>
+    </div>
+
+    <div className="feedback-section">
+      <h3>Constraints</h3>
+      <p style={{ fontSize: '14px', color: '#666' }}>{problem.constraints}</p>
+    </div>
+
+    <div className="feedback-section">
+      <h3>Example</h3>
+      <pre style={{
+        backgroundColor: '#f8f9fa',
+        padding: '12px',
+        borderRadius: '4px',
+        fontSize: '14px',
+        overflow: 'auto'
+      }}>
+        {problem.example}
+      </pre>
+    </div>
+  </>
+));
+
+ProblemDisplay.displayName = 'ProblemDisplay';
+
+const LoadingSkeleton = memo(() => (
+  <div className="container">
+    <div className="header">
+      <h1>🎯 interview-flow-AI2026</h1>
+      <p>Mock Interview</p>
+    </div>
+    <div className="loading-skeleton">
+      <div className="skeleton-box" style={{ height: '60px', marginBottom: '20px' }}></div>
+      <div className="skeleton-box" style={{ height: '120px', marginBottom: '20px' }}></div>
+      <div className="skeleton-box" style={{ height: '300px' }}></div>
+    </div>
+  </div>
+));
+
+LoadingSkeleton.displayName = 'LoadingSkeleton';
 
 function Interview() {
   const navigate = useNavigate();
@@ -63,15 +109,7 @@ function Interview() {
   };
 
   if (loading) {
-    return (
-      <div className="container">
-        <div className="header">
-          <h1>🎯 interview-flow-AI2026</h1>
-          <p>Mock Interview</p>
-        </div>
-        <div className="loading">Loading problem...</div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -86,29 +124,7 @@ function Interview() {
       {problem && (
         <div className="section">
           <h2>{problem.title}</h2>
-          
-          <div className="feedback-section">
-            <h3>Problem Description</h3>
-            <p>{problem.description}</p>
-          </div>
-
-          <div className="feedback-section">
-            <h3>Constraints</h3>
-            <p style={{ fontSize: '14px', color: '#666' }}>{problem.constraints}</p>
-          </div>
-
-          <div className="feedback-section">
-            <h3>Example</h3>
-            <pre style={{
-              backgroundColor: '#f8f9fa',
-              padding: '12px',
-              borderRadius: '4px',
-              fontSize: '14px',
-              overflow: 'auto'
-            }}>
-              {problem.example}
-            </pre>
-          </div>
+          <ProblemDisplay problem={problem} />
         </div>
       )}
 

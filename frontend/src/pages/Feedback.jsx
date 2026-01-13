@@ -1,4 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
+
+// Memoized components for better performance
+const FeedbackSection = memo(({ title, children, emoji }) => (
+  <div className="feedback-section">
+    <h3>{emoji} {title}</h3>
+    {children}
+  </div>
+));
+
+FeedbackSection.displayName = 'FeedbackSection';
+
+const ImprovementPlan = memo(({ steps }) => (
+  <ol className="improvement-steps">
+    {steps && steps.map((step, idx) => (
+      <li key={idx}>{step}</li>
+    ))}
+  </ol>
+));
+
+ImprovementPlan.displayName = 'ImprovementPlan';
+
+const LoadingSkeleton = memo(() => (
+  <div className="container">
+    <div className="header">
+      <h1>🎯 interview-flow-AI2026</h1>
+      <p>Loading Feedback...</p>
+    </div>
+    <div className="loading-skeleton">
+      <div className="skeleton-box" style={{ height: '150px', marginBottom: '20px' }}></div>
+      <div className="skeleton-box" style={{ height: '200px', marginBottom: '20px' }}></div>
+      <div className="skeleton-box" style={{ height: '150px' }}></div>
+    </div>
+  </div>
+));
+
+LoadingSkeleton.displayName = 'LoadingSkeleton';
 
 function Feedback() {
   const [feedbackData, setFeedbackData] = useState(null);
@@ -19,15 +55,7 @@ function Feedback() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="container">
-        <div className="header">
-          <h1>🎯 interview-flow-AI2026</h1>
-          <p>Loading Feedback...</p>
-        </div>
-        <div className="loading">Loading your feedback...</div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (!feedbackData) {
@@ -78,34 +106,25 @@ function Feedback() {
 
         {feedback && (
           <div className="feedback-content">
-            <div className="feedback-section">
-              <h3>⏱️ Time Complexity</h3>
+            <FeedbackSection title="Time Complexity" emoji="⏱️">
               <p>{feedback.time_complexity}</p>
-            </div>
+            </FeedbackSection>
 
-            <div className="feedback-section">
-              <h3>💾 Space Complexity</h3>
+            <FeedbackSection title="Space Complexity" emoji="💾">
               <p>{feedback.space_complexity}</p>
-            </div>
+            </FeedbackSection>
 
-            <div className="feedback-section">
-              <h3>⚠️ Edge Cases</h3>
+            <FeedbackSection title="Edge Cases" emoji="⚠️">
               <p>{feedback.edge_cases}</p>
-            </div>
+            </FeedbackSection>
 
-            <div className="feedback-section">
-              <h3>✨ Code Quality</h3>
+            <FeedbackSection title="Code Quality" emoji="✨">
               <p>{feedback.code_quality}</p>
-            </div>
+            </FeedbackSection>
 
-            <div className="feedback-section">
-              <h3>🚀 3-Step Improvement Plan</h3>
-              <ol className="improvement-steps">
-                {feedback.improvement_plan && feedback.improvement_plan.map((step, idx) => (
-                  <li key={idx}>{step}</li>
-                ))}
-              </ol>
-            </div>
+            <FeedbackSection title="3-Step Improvement Plan" emoji="🚀">
+              <ImprovementPlan steps={feedback.improvement_plan} />
+            </FeedbackSection>
           </div>
         )}
       </div>
