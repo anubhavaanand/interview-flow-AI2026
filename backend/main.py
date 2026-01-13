@@ -1,26 +1,50 @@
 """
 Main FastAPI application for interview-flow-AI2026.
-Backend API for DSA interview coaching.
+Backend API for DSA interview coaching with comprehensive logging and validation.
 """
 
 import os
 import json
-from fastapi import FastAPI, HTTPException
+import logging
+from datetime import datetime, timedelta
+from functools import lru_cache
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, Field
 from dotenv import load_dotenv
 from openai import OpenAI
 from prompts import DSA_FEEDBACK_PROMPT
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Load environment variables
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('api.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Initialize FastAPI app
 app = FastAPI(
     title="interview-flow-AI2026",
-    description="DSA Interview Coach API",
+    description="DSA Interview Coach API with AI-powered feedback",
     version="0.1.0"
 )
+
+# Add rate limiter to app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS
 app.add_middleware(
@@ -31,26 +55,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize GitHub Models client
+# Environment variable validation at startup
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development or production
 
+# Validate environment variables
+@app.on_event("startup")
+async def validate_environment():
+    """Validate required environment variables on startup."""
+    if not GITHUB_TOKEN:
+        logger.warning("⚠️  GitHub token not configured. API will not be fully functional.")
+        logger.warning("   Set GITHUB_TOKEN environment variable or run: ./setup-env.sh")
+    else:
+        logger.info("✅ GitHub Models client configured successfully")
+    
+    # Log environment
+    logger.info(f"Running in {ENVIRONMENT} mode")
+    
+    # Warn if running in production without HTTPS
+    if ENVIRONMENT == "production":
+        logger.info("🔒 Production mode - ensure HTTPS is configured at reverse proxy level")
+        logger.info("   Recommended: Use nginx or similar with SSL/TLS certificates")
+
+# Initialize GitHub Models client
 client = None
 
-if not GITHUB_TOKEN:
-    print("⚠️  Warning: GitHub token not set. Set GITHUB_TOKEN environment variable.")
-    print("   Run: ./setup-env.sh")
-else:
+if GITHUB_TOKEN:
     try:
         client = OpenAI(
             api_key=GITHUB_TOKEN,
             base_url="https://models.inference.ai.azure.com"
         )
-        print("✅ GitHub Models client initialized successfully")
+        logger.info("✅ GitHub Models client initialized successfully")
     except Exception as e:
-        print(f"⚠️  Warning: Failed to initialize GitHub Models client: {e}")
+        logger.error(f"⚠️  Failed to initialize GitHub Models client: {e}")
+else:
+    logger.warning("⚠️  Warning: GitHub token not set. Set GITHUB_TOKEN environment variable.")
 
 # ============================================================================
-# DATA MODELS
+# DATA MODELS WITH VALIDATORS
 # ============================================================================
 
 class Problem(BaseModel):
@@ -64,9 +107,41 @@ class Problem(BaseModel):
     function_signature: str
 
 class AnalysisRequest(BaseModel):
-    """Data model for code analysis request."""
-    code: str
-    topic: str
+    """Data model for code analysis request with validation."""
+    code: str = Field(..., min_length=1, max_length=10000)
+    topic: str = Field(..., min_length=1, max_length=100)
+    
+    @validator('code')
+    def validate_code(cls, v):
+        """Validate and sanitize code input."""
+        if not v or not v.strip():
+            raise ValueError('Code cannot be empty or whitespace only')
+        
+        # Basic sanitization - remove null bytes
+        v = v.replace('\x00', '')
+        
+        # Check for minimum code length (at least some content)
+        if len(v.strip()) < 5:
+            raise ValueError('Code is too short - please write a meaningful solution')
+        
+        return v
+    
+    @validator('topic')
+    def validate_topic(cls, v):
+        """Validate topic input."""
+        if not v or not v.strip():
+            raise ValueError('Topic cannot be empty')
+        
+        # Sanitize topic
+        v = v.strip().lower()
+        
+        # Validate against allowed topics
+        allowed_topics = ['sliding_window', 'two_pointers', 'dynamic_programming', 
+                         'array', 'string', 'tree', 'graph', 'other']
+        if v not in allowed_topics:
+            logger.warning(f"Topic '{v}' not in standard list, allowing anyway")
+        
+        return v
 
 class Feedback(BaseModel):
     """Data model for AI-generated feedback."""
@@ -102,45 +177,66 @@ HARDCODED_PROBLEM = Problem(
 
 @app.get("/", tags=["health"])
 async def health_check():
-    """Health check endpoint."""
+    """Health check endpoint with detailed status."""
+    logger.info("Health check requested")
     return {
         "status": "ok",
         "message": "interview-flow-AI2026 API is running",
-        "version": "0.1.0"
+        "version": "0.1.0",
+        "ai_configured": client is not None,
+        "timestamp": datetime.now().isoformat()
     }
 
+# Cache for problem endpoint (simple in-memory cache)
+@lru_cache(maxsize=1)
+def get_cached_problem():
+    """Get cached problem to reduce processing time."""
+    logger.info("Fetching problem (cached)")
+    return HARDCODED_PROBLEM
+
 @app.get("/problem", response_model=Problem, tags=["problems"])
-async def get_problem():
+@limiter.limit("30/minute")  # Rate limit: 30 requests per minute
+async def get_problem(request: Request):
     """
     Get a DSA problem.
     Currently returns a hardcoded Sliding Window problem.
+    Response is cached for performance.
     """
-    return HARDCODED_PROBLEM
+    logger.info("GET /problem - Problem requested")
+    try:
+        problem = get_cached_problem()
+        logger.info(f"Returning problem: {problem.id}")
+        return problem
+    except Exception as e:
+        logger.error(f"Error fetching problem: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch problem. Please try again later."
+        )
 
 @app.post("/analyze", response_model=AnalysisResponse, tags=["analysis"])
-async def analyze_code(request: AnalysisRequest):
+@limiter.limit("10/minute")  # Rate limit: 10 analysis requests per minute
+async def analyze_code(request: AnalysisRequest, req: Request):
     """
     Analyze user's code and provide AI-generated feedback.
     
     Args:
-        request: AnalysisRequest with code and topic
+        request: AnalysisRequest with validated code and topic
+        req: FastAPI Request object for logging
     
     Returns:
-        AnalysisResponse with feedback from Azure OpenAI
+        AnalysisResponse with feedback from GitHub Models API
     """
+    client_ip = req.client.host if req.client else "unknown"
+    logger.info(f"POST /analyze - Code analysis requested from {client_ip}")
+    logger.info(f"Topic: {request.topic}, Code length: {len(request.code)} chars")
     
-    # Validate inputs
-    if not request.code or not request.code.strip():
-        raise HTTPException(status_code=400, detail="Code cannot be empty")
-    
-    if not request.topic or not request.topic.strip():
-        raise HTTPException(status_code=400, detail="Topic cannot be empty")
-    
-    # Check if Azure OpenAI is configured
+    # Check if GitHub Models is configured
     if not client:
+        logger.error("Analysis requested but GitHub Models client not configured")
         raise HTTPException(
             status_code=503,
-            detail="GitHub token is not configured. Run: ./setup-env.sh"
+            detail="AI service is not configured. Please contact the administrator or set GITHUB_TOKEN environment variable."
         )
     
     try:
@@ -149,6 +245,8 @@ async def analyze_code(request: AnalysisRequest):
             topic=request.topic,
             code=request.code
         )
+        
+        logger.info("Calling GitHub Models API for code analysis")
         
         # Call GitHub Models API
         response = client.chat.completions.create(
@@ -168,21 +266,38 @@ async def analyze_code(request: AnalysisRequest):
         )
         
         feedback_text = response.choices[0].message.content
+        logger.info(f"Received feedback from AI (length: {len(feedback_text)} chars)")
         
         # Parse feedback into structured format
         feedback = parse_feedback(feedback_text)
+        
+        logger.info("Successfully analyzed code and generated feedback")
         
         return AnalysisResponse(
             success=True,
             feedback=feedback
         )
     
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
-        # Log error and return response
-        print(f"Error calling GitHub Models: {str(e)}")
+        # Log detailed error and return user-friendly message
+        logger.error(f"Error analyzing code: {type(e).__name__}: {str(e)}", exc_info=True)
+        
+        # Provide specific error messages based on error type
+        if "timeout" in str(e).lower():
+            error_msg = "The AI service timed out. Please try again with a shorter code snippet."
+        elif "rate" in str(e).lower() or "quota" in str(e).lower():
+            error_msg = "Too many requests. Please wait a moment and try again."
+        elif "authentication" in str(e).lower() or "unauthorized" in str(e).lower():
+            error_msg = "AI service authentication failed. Please contact the administrator."
+        else:
+            error_msg = f"Failed to analyze code: {str(e)}"
+        
         raise HTTPException(
             status_code=500,
-            detail=f"Error analyzing code: {str(e)}"
+            detail=error_msg
         )
 
 # ============================================================================
